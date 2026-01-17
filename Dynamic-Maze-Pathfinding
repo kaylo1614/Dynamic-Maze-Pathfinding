@@ -1,0 +1,355 @@
+#include <iostream> 
+using namespace std; 
+//定義結構體 
+struct Record { 
+int num; 
+int pass; 
+}; 
+//設定迷宮中每個格子的步數信息 
+void setStep(Record** map, int sr, int sc, int row, int column); 
+class Maze { 
+public: 
+Maze();// 預設建構子 
+Maze(int nrow, int ncolumn, int nnum); //建構子 
+void setMaze(int row, int column, int num);//加入Maze數值  
+friend void setStep(Record** map, int sr, int sc, int row, int column); 
+friend void Answer(Record** map, int sr, int sc, int row, int column); 
+private: 
+int row; 
+int column; 
+int num; 
+}; 
+struct Qnode { 
+//用link來節省資源 
+Maze part; 
+Qnode* link; 
+}; 
+typedef Qnode* QnodePtr;//讓這個結構體可以直接宣告 
+class Queue { 
+public: 
+friend void setStep(Record** map, int sr, int sc, int row, int column); 
+friend void Answer(Record** map, int sr, int sc, int row, int column); 
+Queue();//建構子 
+Queue(const Queue& obj);//複製建構子 
+~Queue();//解構子 
+void push(Maze entry);//把資料加入Queue 
+void pop();//把數據移除 
+bool isEmpty();//確認是否為空 
+private: 
+QnodePtr front;//前端 
+QnodePtr back;//後端 
+}; 
+//檢查座標是否在迷宮範圍內(我沒有給定邊界數值) 
+bool outMap(int row, int column, int mapr, int mapc); 
+//找到從起點到終點的最短路徑並顯示結果 
+void Answer(Record** map, int sr, int sc, int row, int column); 
+ 
+int main() { 
+  
+ //初始參數 
+ int row = 0, column = 0, obj = 0; 
+ int startr = 0, startc = 0, goalr = 0, goalc = 0; 
+ char index; 
+ 
+ //宣告矩陣(二微動態陣列)，用來儲存地圖 
+ Record** map; 
+ 
+ cout << "輸入陣列大小、起點、障礙物與終點:" << endl; 
+ cin >> row >> column; 
+ 
+ //給定陣列的行的數量 
+ map = new Record*[row + 1]; 
+ 
+ for (int i = 1; i <= row; i++) { 
+ 
+  //給定陣列裡列的數量 
+  map[i] = new Record[column + 1]; 
+ 
+  for (int j = 1; j <= column; j++) { 
+ 
+   //預設距離為-2 
+   map[i][j].num = -2; 
+  } 
+ 
+  //使用者輸入地圖 
+  cin >> obj; 
+  while (obj != 0) { 
+ 
+   cin >> index; 
+ 
+   if (index == 'x') { 
+    map[i][obj].num = -1; 
+   } 
+   else if (index == 's') { 
+ 
+    startr = i; 
+    startc = obj; 
+    map[i][obj].num = -3; 
+   } 
+   else if (index == 't') { 
+ 
+    goalr = i; 
+    goalc = obj; 
+    map[i][obj].num = 0; 
+   } 
+   cin >> obj; 
+  } 
+   
+ } 
+ 
+ cout << endl; 
+ cout << "The map is like the following picture: " << endl << endl; 
+ 
+ //顯示地圖 
+ for (int i = 1; i <= row; i++) { 
+ 
+  for (int j = 1; j <= column; j++) { 
+ 
+   if (map[i][j].num == 0) { 
+    
+    cout << "t "; 
+   } 
+   else if (map[i][j].num == -1) { 
+ 
+    cout << "X "; 
+   } 
+   else if (map[i][j].num == -2) { 
+ 
+    cout << "0 "; 
+   } 
+   else if (map[i][j].num == -3) { 
+ 
+    cout << "s "; 
+   } 
+  } 
+  cout << endl; 
+ } 
+ // 設定迷宮中每個格子的步數信息 
+ setStep(map, goalr, goalc, row, column); 
+ // 求解最短路徑並顯示結果 
+ Answer(map, startr, startc, row, column); 
+ 
+ // 釋放動態分配的記憶體 
+ for (int i = 1; i <= row; i++) 
+  delete[] map[i]; 
+ delete[] map; 
+ 
+ system("pause"); 
+ return 0; 
+} 
+ 
+void setStep(Record** map, int sr, int sc, int row, int column) { 
+ 
+ Queue paint; 
+ Maze entry(sr, sc, map[sr][sc].num); 
+ 
+ paint.push(entry); 
+ 
+ while (!paint.isEmpty()) { 
+ 
+  if ((!outMap(paint.front->part.row - 1, paint.front->part.column, row, 
+column)) && map[paint.front->part.row - 1][paint.front->part.column].num < -1) { 
+ 
+   map[paint.front->part.row - 1][paint.front->part.column].num = 
+paint.front->part.num + 1; 
+   entry.setMaze(paint.front->part.row - 1, paint.front->part.column, 
+paint.front->part.num + 1); 
+   paint.push(entry); 
+  } 
+ 
+  if ((!outMap(paint.front->part.row, paint.front->part.column - 1, row, 
+column)) && map[paint.front->part.row][paint.front->part.column - 1].num < -1) { 
+ 
+   map[paint.front->part.row][paint.front->part.column - 1].num = 
+paint.front->part.num + 1; 
+   entry.setMaze(paint.front->part.row, paint.front->part.column - 1, 
+paint.front->part.num + 1); 
+   paint.push(entry); 
+  } 
+ 
+  if ((!outMap(paint.front->part.row + 1, paint.front->part.column, row, 
+column)) && map[paint.front->part.row + 1][paint.front->part.column].num < -1) { 
+ 
+   map[paint.front->part.row + 1][paint.front->part.column].num = 
+paint.front->part.num + 1; 
+   entry.setMaze(paint.front->part.row + 1, paint.front->part.column, 
+paint.front->part.num + 1); 
+   paint.push(entry); 
+  } 
+ 
+  if ((!outMap(paint.front->part.row, paint.front->part.column + 1, row, 
+column)) && map[paint.front->part.row][paint.front->part.column + 1].num < -1) { 
+ 
+   map[paint.front->part.row][paint.front->part.column + 1].num = 
+paint.front->part.num + 1; 
+   entry.setMaze(paint.front->part.row, paint.front->part.column + 1, 
+paint.front->part.num + 1); 
+   paint.push(entry); 
+  } 
+  paint.pop(); 
+ } 
+}  
+ 
+void Answer(Record** map, int sr, int sc, int row, int column) { 
+  
+ cout << endl; 
+ 
+ if (map[sr][sc].num == -3) { 
+  cout << "No solution !!" << endl; 
+ 
+  for (int i = 1; i <= row; i++) { 
+ 
+   for (int j = 1; j <= column; j++) { 
+ 
+    if (map[i][j].num == -1) { 
+     cout << "x"; 
+    } 
+    else if (map[i][j].num == 0) { 
+     cout << "t"; 
+    } 
+    else if (map[i][j].num == -3) { 
+     cout << "s"; 
+    } 
+    else { 
+     cout << "0"; 
+    } 
+   } 
+   cout << endl; 
+  } 
+   
+  cout << endl << endl; 
+  return; 
+ } 
+  
+ cout << "We need " << map[sr][sc].num << " steps." << endl << endl; 
+ cout << "The path:" << endl << endl; 
+ 
+ int* answerList = new int[(map[sr][sc].num + 1) * 2]; 
+ 
+ answerList[0] = sr; 
+ answerList[1] = sc; 
+ map[sr][sc].pass = 1; 
+ 
+ //檢查上下左右是否有可以走的值 
+ for (int i = 2; i < (map[sr][sc].num + 1) * 2; i = i + 2) { 
+ 
+  // 上面 
+  if ((!outMap(answerList[i - 2] - 1, answerList[i - 1], row, column)) && 
+map[answerList[i - 2] - 1][answerList[i - 1]].num == map[answerList[i - 
+2]][answerList[i - 1]].num - 1) { 
+   map[answerList[i - 2] - 1][answerList[i - 1]].pass = 1; 
+   answerList[i] = answerList[i - 2] - 1; 
+   answerList[i + 1] = answerList[i - 1]; 
+  } 
+  //左邊 
+  else if ((!outMap(answerList[i - 2], answerList[i - 1] - 1, row, column)) && 
+map[answerList[i - 2]][answerList[i - 1] - 1].num == map[answerList[i - 
+2]][answerList[i - 1]].num - 1) { 
+   map[answerList[i - 2]][answerList[i - 1] - 1].pass = 1; 
+   answerList[i] = answerList[i - 2]; 
+   answerList[i + 1] = answerList[i - 1] - 1; 
+  } 
+  //下面 
+  else if ((!outMap(answerList[i - 2] + 1, answerList[i - 1], row, column)) && 
+map[answerList[i - 2] + 1][answerList[i - 1]].num == map[answerList[i - 
+2]][answerList[i - 1]].num - 1) { 
+   map[answerList[i - 2] + 1][answerList[i - 1]].pass = 1; 
+   answerList[i] = answerList[i - 2] + 1; 
+   answerList[i + 1] = answerList[i - 1]; 
+  } 
+  //右邊 
+  else if ((!outMap(answerList[i - 2], answerList[i - 1] + 1, row, column)) && 
+map[answerList[i - 2]][answerList[i - 1] + 1].num == map[answerList[i - 
+2]][answerList[i - 1]].num - 1) { 
+   map[answerList[i - 2]][answerList[i - 1] + 1].pass = 1; 
+   answerList[i] = answerList[i - 2]; 
+   answerList[i + 1] = answerList[i - 1] + 1; 
+  } 
+  else { 
+   cout << "Wrong in Something in the Solution!!!\n\n"; 
+   exit(1); 
+  } 
+ } 
+ 
+ cout << "( " << answerList[0] << ", " << answerList[1] << " ) "; 
+ for (int i = 2; i < (map[sr][sc].num + 1) * 2; i = i + 2) { 
+  cout << "( " << answerList[i] << ", " << answerList[i + 1] << " ) "; 
+ } 
+ 
+ delete[] answerList; 
+} 
+ 
+bool outMap(int row, int column, int mapr, int mapc) { 
+ if (row < 1 || column < 1 || row > mapr || column > mapc) { 
+  return (true); 
+ } 
+ return false; 
+} 
+ 
+Maze::Maze() {} 
+ 
+Maze::Maze(int nrow, int ncolumn, int nnum) { 
+ row = nrow; 
+ column = ncolumn; 
+ num = nnum; 
+} 
+ 
+void Maze::setMaze(int nrow, int ncolumn, int nnum) { 
+ row = nrow; 
+ column = ncolumn; 
+ num = nnum; 
+} 
+ 
+Queue::Queue() { 
+ front = NULL; 
+ back = NULL; 
+} 
+ 
+Queue::~Queue() { 
+ delete front; 
+ delete back; 
+} 
+ 
+Queue::Queue(const Queue& obj) { 
+ front = obj.front; 
+ back = obj.back; 
+} 
+ 
+void Queue::push(Maze entry) { 
+ if (isEmpty()) { 
+  front = new Qnode; 
+  front->part = entry; 
+  front->link = NULL; 
+  back = front; 
+ } 
+ else { 
+ 
+  QnodePtr tempPtr; 
+  tempPtr = new Qnode; 
+  tempPtr->part = entry; 
+  tempPtr->link = NULL; 
+  back->link = tempPtr; 
+  back = tempPtr; 
+ } 
+} 
+ 
+void Queue::pop() { 
+ if (isEmpty()) { 
+  exit(1); 
+ } 
+ 
+ QnodePtr discard; 
+ discard = front; 
+ front = front->link; 
+ 
+ if (front == NULL) { 
+  back = NULL; 
+ } 
+delete discard; 
+} 
+bool Queue::isEmpty() { 
+if (back == NULL) { 
+return true; 
+} 
+return false; 
+} 
