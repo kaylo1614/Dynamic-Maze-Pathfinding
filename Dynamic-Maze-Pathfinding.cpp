@@ -1,4 +1,5 @@
 #include <iostream> 
+#include <cstdlib> // 為了使用 exit(1)
 using namespace std; 
 //定義結構體 
 struct Record { 
@@ -306,9 +307,10 @@ Queue::Queue() {
 } 
  
 Queue::~Queue() { 
- delete front; 
- delete back; 
-} 
+    while (!isEmpty()) {
+        pop(); 
+    }
+}
  
 Queue::Queue(const Queue& obj) { 
  front = obj.front; 
