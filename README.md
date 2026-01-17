@@ -34,7 +34,7 @@ Unlike standard solutions that rely on `std::queue` or `std::vector`, this proje
   Represents a single cell in the maze grid, storing the **step count** (`num`) and **visited status** (`pass`).  
   代表迷宮格子的結構，儲存**步數** (`num`) 與**路徑標記** (`pass`)。
 
-  ## 🛠️ Getting Started / 使用指南
+## 🛠️ Getting Started / 使用指南
 
 ### Prerequisites / 環境需求
 * **C++ Compiler**: GCC (g++) or any standard C++ IDE.
